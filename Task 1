@@ -1,0 +1,13 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+url = "https://data.worldbank.org/indicator/SP.POP.TOTL"
+data = {'Age_Group':['0-14','15-24','25-54','55-64','665+'],
+        'Population':[1.8e9, 1.2e9, 2.5e9, 600e6, 500e6]}
+df = pd.DataFrame(data)
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Age_Group', y='Population', data=df)
+plt.title('Population by Age Group')
+plt.xlabel('Age Group')
+plt.ylabel('Population')
+plt.show()
