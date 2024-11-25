@@ -1,0 +1,63 @@
+# Step 1: Import Required Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from nltk.corpus import stopwords
+import nltk
+
+# Download necessary NLTK data
+nltk.download('vader_lexicon')
+nltk.download('stopwords')
+
+# Step 2: Load the Dataset
+df = pd.read_csv("/content/twitter_training.csv")
+
+# View the dataset
+print(df.head())
+
+# Step 3: Preprocess the Data
+import re
+def clean_text(text):
+    text = re.sub(r"http\S+", "", text)  # Remove URLs
+    text = re.sub(r"@\w+", "", text)     # Remove mentions
+    text = re.sub(r"#\w+", "", text)     # Remove hashtags
+    text = re.sub(r"[^\w\s]", "", text)  # Remove punctuations
+    text = text.lower()                  # Convert to lowercase
+    return text
+
+# Check the actual column names 
+print(df.columns)
+tweet_column_name = df.columns[2]
+
+# Apply cleaning function
+df['cleaned_text'] = df[tweet_column_name].apply(clean_text)
+
+# Remove stopwords
+stop_words = set(stopwords.words('english'))
+df['cleaned_text'] = df['cleaned_text'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
+
+# View the cleaned data
+print(df[[tweet_column_name, 'cleaned_text']].head())
+
+# Step 4: Perform Sentiment Analysis
+sia = SentimentIntensityAnalyzer()
+
+# Apply sentiment analysis
+df['sentiment'] = df['cleaned_text'].apply(lambda x: sia.polarity_scores(x)['compound'])
+
+# Classify sentiments
+df['sentiment_label'] = df['sentiment'].apply(lambda x: 'positive' if x > 0 else ('negative' if x < 0 else 'neutral'))
+
+# View sentiment results
+print(df[['cleaned_text', 'sentiment', 'sentiment_label']].head())
+
+# Step 5: Visualize Sentiment Patterns
+plt.figure(figsize=(10, 6))
+sns.countplot(data=df, x='sentiment_label', palette='viridis')
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Count")
+plt.show()
