@@ -1,0 +1,78 @@
+# Step 1: Import Necessary Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import folium  # For geographical visualizations
+from folium.plugins import HeatMap
+
+# Step 2: Load the Dataset
+data = pd.read_csv('/content/US_Accidents.csv')
+
+# Preview the data
+print(data.head())
+
+# Step 3: Data Cleaning
+# Check missing values
+missing_values = data.isnull().sum()
+print("Missing values:\n", missing_values)
+
+# Drop columns with high missing values or irrelevant data
+columns_to_drop = ['ID', 'Number', 'Precipitation(in)', 'Wind_Chill(F)', 'Airport_Code']
+data = data.drop(columns=columns_to_drop, axis=1)
+
+# Handle missing values (use median or mode as appropriate)
+data['Temperature(F)'] = data['Temperature(F)'].fillna(data['Temperature(F)'].median())
+data['Humidity(%)'] = data['Humidity(%)'].fillna(data['Humidity(%)'].median())
+data['Pressure(in)'] = data['Pressure(in)'].fillna(data['Pressure(in)'].median())
+data['Visibility(mi)'] = data['Visibility(mi)'].fillna(data['Visibility(mi)'].median())
+data['Weather_Condition'] = data['Weather_Condition'].fillna(data['Weather_Condition'].mode()[0])
+
+# Drop rows with any remaining missing values
+data = data.dropna()
+
+# Verify data cleaning
+print(data.isnull().sum())
+
+# Step 3: Data Exploration
+# Distribution of Severity levels
+sns.countplot(data=data, x='Severity', palette='viridis')
+plt.title('Distribution of Severity Levels')
+plt.xlabel('Severity')
+plt.ylabel('Count')
+plt.show()
+
+# Accidents by time of day
+data['Start_Time'] = pd.to_datetime(data['Start_Time'], format='%d-%m-%Y %H:%M', errors='coerce')
+data['Hour'] = data['Start_Time'].dt.hour
+
+sns.histplot(data['Hour'], bins=24, kde=False, color='blue')
+plt.title('Accidents by Hour of the Day')
+plt.xlabel('Hour')
+plt.ylabel('Number of Accidents')
+plt.show()
+
+# Top 10 cities with the highest number of accidents
+top_cities = data['City'].value_counts().head(10)
+sns.barplot(x=top_cities.values, y=top_cities.index, palette='coolwarm')
+plt.title('Top 10 Cities with Most Accidents')
+plt.xlabel('Number of Accidents')
+plt.ylabel('City')
+plt.show()
+
+# Step 4: Analyze Weather Conditions
+# Weather conditions causing most accidents
+top_weather_conditions = data['Weather_Condition'].value_counts().head(10)
+sns.barplot(x=top_weather_conditions.values, y=top_weather_conditions.index, palette='Blues_r')
+plt.title('Top Weather Conditions for Accidents')
+plt.xlabel('Number of Accidents')
+plt.ylabel('Weather Condition')
+plt.show()
+
+# Severity vs Weather Condition
+severity_weather = data.groupby(['Weather_Condition'])['Severity'].mean().sort_values(ascending=False).head(10)
+sns.barplot(x=severity_weather.values, y=severity_weather.index, palette='magma')
+plt.title('Average Severity by Weather Condition')
+plt.xlabel('Average Severity')
+plt.ylabel('Weather Condition')
+plt.show()
